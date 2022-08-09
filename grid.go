@@ -20,8 +20,10 @@ func createGrid() *fyne.Container {
 				bg.FillColor = color.Gray{0xE0}
 			}
 
+			img := canvas.NewImageFromResource(resourceForPiece())
+
 			// add all 64 rectangles to the grid
-			grid.Add(bg)
+			grid.Add(container.NewMax(bg, img))
 		}
 	}
 
