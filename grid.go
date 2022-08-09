@@ -21,7 +21,8 @@ func createGrid(b *chess.Board) *fyne.Container {
 				bg.FillColor = color.Gray{0xE0}
 			}
 
-			piece := b.Piece(chess.Square(x + (7-8)*8))
+			// revert fyne x and y axis to match chess's library
+			piece := b.Piece(chess.Square(x + (7-y)*8))
 
 			img := canvas.NewImageFromResource(resourceForPiece(piece))
 			// image maintains its aspect ratio while in the canvas
