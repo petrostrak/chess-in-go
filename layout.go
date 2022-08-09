@@ -5,6 +5,9 @@ import (
 	"fyne.io/fyne/v2/theme"
 )
 
+// boardLayout improves the layout for the grid arrangement.
+// It keeps the blocks of the grid squared after the user
+// resize the application window
 type boardLayout struct{}
 
 func (b *boardLayout) Layout(cells []fyne.CanvasObject, s fyne.Size) {
