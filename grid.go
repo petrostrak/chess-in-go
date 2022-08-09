@@ -22,6 +22,9 @@ func createGrid() *fyne.Container {
 
 			img := canvas.NewImageFromResource(resourceForPiece())
 
+			// image maintains its aspect ratio while in the canvas
+			img.FillMode = canvas.ImageFillContain
+
 			// add all 64 rectangles to the grid
 			grid.Add(container.NewMax(bg, img))
 		}
