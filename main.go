@@ -6,6 +6,8 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
 	"github.com/notnil/chess"
 )
 
@@ -15,7 +17,10 @@ func main() {
 
 	game := chess.NewGame()
 	grid := createGrid(game.Position().Board())
-	w.SetContent(grid)
+
+	over := canvas.NewImageFromResource(nil)
+	over.Hide()
+	w.SetContent(container.NewMax(grid, container.NewWithoutLayout(over)))
 	w.Resize(fyne.NewSize(480, 480))
 
 	go func() {
@@ -26,7 +31,7 @@ func main() {
 			valid := game.ValidMoves()
 			m := valid[rand.Intn(len(valid))]
 
-			move(m, game, grid)
+			move(m, game, grid, over)
 		}
 
 	}()

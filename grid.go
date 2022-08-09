@@ -2,6 +2,7 @@ package main
 
 import (
 	"image/color"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -36,8 +37,40 @@ func createGrid(b *chess.Board) *fyne.Container {
 	return grid
 }
 
-func move(m *chess.Move, game *chess.Game, grid *fyne.Container) {
+func squareToOffset(sq chess.Square) int {
+	x := sq % 8
+	y := 7 - ((sq - x) / 8)
+
+	return int(x + y*8)
+}
+
+func move(m *chess.Move, game *chess.Game, grid *fyne.Container, over *canvas.Image) {
+	off1 := squareToOffset(m.S1())
+	cell := grid.Objects[off1].(*fyne.Container)
+	img1 := cell.Objects[1].(*canvas.Image)
+	pos1 := cell.Position()
+
+	over.Resource = img1.Resource
+	over.Move(pos1)
+	over.Resize(img1.Size())
+
+	img1.Resource = nil
+	img1.Refresh()
+	over.Show()
+
+	off2 := squareToOffset(m.S2())
+	cell = grid.Objects[off2].(*fyne.Container)
+	pos2 := cell.Position()
+
+	a := canvas.NewPositionAnimation(pos1, pos2, time.Millisecond*500, func(p fyne.Position) {
+		over.Move(p)
+		over.Refresh()
+	})
+	a.Start()
+	time.Sleep(time.Millisecond * 500)
+
 	game.Move(m)
+	over.Hide()
 	refreshGrid(grid, game.Position().Board())
 }
 
