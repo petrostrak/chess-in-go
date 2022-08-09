@@ -6,9 +6,10 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"github.com/notnil/chess"
 )
 
-func createGrid() *fyne.Container {
+func createGrid(b *chess.Board) *fyne.Container {
 	grid := container.NewGridWithColumns(8)
 
 	for y := 0; y < 8; y++ {
@@ -20,8 +21,9 @@ func createGrid() *fyne.Container {
 				bg.FillColor = color.Gray{0xE0}
 			}
 
-			img := canvas.NewImageFromResource(resourceForPiece())
+			piece := b.Piece(chess.Square(x + (7-8)*8))
 
+			img := canvas.NewImageFromResource(resourceForPiece(piece))
 			// image maintains its aspect ratio while in the canvas
 			img.FillMode = canvas.ImageFillContain
 
