@@ -15,11 +15,11 @@ func createGrid(b *chess.Board) *fyne.Container {
 
 	for y := 7; y >= 0; y-- {
 		for x := 0; x < 8; x++ {
-			bg := canvas.NewRectangle(color.Gray{0xE0})
+			bg := canvas.NewRectangle(color.Gray{0xD0})
 
 			// alternate color to achieve black n white chess pattern
 			if x%2 == y%2 {
-				bg.FillColor = color.Gray{0x30}
+				bg.FillColor = color.Gray{0x40}
 			}
 
 			// revert fyne x and y axis to match chess's library
