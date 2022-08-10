@@ -1,7 +1,6 @@
 package main
 
 import (
-	"image/color"
 	"math/rand"
 	"time"
 
@@ -21,8 +20,7 @@ func main() {
 
 	over := canvas.NewImageFromResource(nil)
 	over.Hide()
-	bg := canvas.NewRectangle(color.Gray{Y: 0x7A})
-	w.SetContent(container.NewMax(bg, grid, container.NewWithoutLayout(over)))
+	w.SetContent(container.NewMax(grid, container.NewWithoutLayout(over)))
 	w.Resize(fyne.NewSize(480, 480))
 
 	go func() {
