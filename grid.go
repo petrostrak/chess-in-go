@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"github.com/notnil/chess"
 )
 
@@ -65,6 +66,17 @@ func move(m *chess.Move, game *chess.Game, grid *fyne.Container, over *canvas.Im
 	})
 	a.Start()
 	time.Sleep(time.Millisecond * 500)
+
+	if game.Outcome() != chess.NoOutcome {
+		result := "draw"
+		switch game.Outcome().String() {
+		case "1-0":
+			result = "won"
+		case "0-1":
+			result = "lost"
+		}
+		dialog.ShowInformation("Game ended", "Game "+result+" because "+game.Method().String(), w)
+	}
 
 	game.Move(m)
 	over.Hide()
