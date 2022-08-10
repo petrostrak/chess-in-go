@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"image/color"
 	"math/rand"
 	"time"
@@ -79,10 +78,24 @@ func (p *piece) Tapped(ev *fyne.PointEvent) {
 		return
 	}
 
-	msg := fmt.Sprintf("Cannot move piece %d to square %v", p.game.Position().Board().Piece(moveStart), p.square)
-
 	moveStart = chess.NoSquare
-	dialog.ShowInformation("Invalid move", msg, w)
+	off := squareToOffset(p.square)
+	cell := grid.Objects[off].(*fyne.Container)
+
+	start.FillColor = notOkBGColor
+	start.StrokeColor = notOkColor
+
+	start.Move(cell.Position())
+	start.Resize(cell.Size())
+	start.Refresh()
+	start.Show()
+
+	go func() {
+		time.Sleep(time.Millisecond * 500)
+		start.Hide()
+		start.Refresh()
+	}()
+
 }
 
 func randomResponse(game *chess.Game) {
