@@ -1,3 +1,4 @@
+//go:generate fyne bundle -o bundled-board.go board
 package main
 
 import (

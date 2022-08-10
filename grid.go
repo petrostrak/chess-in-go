@@ -15,11 +15,13 @@ func createGrid(b *chess.Board) *fyne.Container {
 
 	for y := 7; y >= 0; y-- {
 		for x := 0; x < 8; x++ {
-			bg := canvas.NewRectangle(color.Gray{0xD0})
+			bg := canvas.NewRectangle(color.NRGBA{0xF4, 0xE2, 0xB6, 0xFF})
+			effect := canvas.NewImageFromResource(resourceOverlay1Png)
 
 			// alternate color to achieve black n white chess pattern
 			if x%2 == y%2 {
-				bg.FillColor = color.Gray{0x40}
+				bg.FillColor = color.NRGBA{0x73, 0x50, 0x32, 0xFF}
+				effect.Resource = resourceOverlay2Png
 			}
 
 			// revert fyne x and y axis to match chess's library
@@ -30,7 +32,7 @@ func createGrid(b *chess.Board) *fyne.Container {
 			img.FillMode = canvas.ImageFillContain
 
 			// add all 64 rectangles to the grid
-			cells = append(cells, container.NewMax(bg, img))
+			cells = append(cells, container.NewMax(bg, effect, img))
 		}
 	}
 
@@ -47,7 +49,7 @@ func squareToOffset(sq chess.Square) int {
 func move(m *chess.Move, game *chess.Game, grid *fyne.Container, over *canvas.Image) {
 	off1 := squareToOffset(m.S1())
 	cell := grid.Objects[off1].(*fyne.Container)
-	img1 := cell.Objects[1].(*canvas.Image)
+	img1 := cell.Objects[2].(*canvas.Image)
 	pos1 := cell.Position()
 
 	over.Resource = img1.Resource
@@ -79,7 +81,7 @@ func refreshGrid(grid *fyne.Container, b *chess.Board) {
 	for _, cell := range grid.Objects {
 		piece := b.Piece(chess.Square(x + y*8))
 
-		img := cell.(*fyne.Container).Objects[1].(*canvas.Image)
+		img := cell.(*fyne.Container).Objects[2].(*canvas.Image)
 		img.Resource = resourceForPiece(piece)
 		img.Refresh()
 
