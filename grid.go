@@ -10,7 +10,7 @@ import (
 	"github.com/notnil/chess"
 )
 
-func createGrid(b *chess.Board) *fyne.Container {
+func createGrid(g *chess.Game) *fyne.Container {
 	var cells []fyne.CanvasObject
 
 	for y := 7; y >= 0; y-- {
@@ -24,15 +24,10 @@ func createGrid(b *chess.Board) *fyne.Container {
 				effect.Resource = resourceOverlay2Png
 			}
 
-			// revert fyne x and y axis to match chess's library
-			piece := b.Piece(chess.Square(x + y*8))
-
-			img := canvas.NewImageFromResource(resourceForPiece(piece))
-			// image maintains its aspect ratio while in the canvas
-			img.FillMode = canvas.ImageFillContain
+			p := newPiece(g, chess.Square(x+y*8))
 
 			// add all 64 rectangles to the grid
-			cells = append(cells, container.NewMax(bg, effect, img))
+			cells = append(cells, container.NewMax(bg, effect, p))
 		}
 	}
 
@@ -49,7 +44,7 @@ func squareToOffset(sq chess.Square) int {
 func move(m *chess.Move, game *chess.Game, grid *fyne.Container, over *canvas.Image) {
 	off1 := squareToOffset(m.S1())
 	cell := grid.Objects[off1].(*fyne.Container)
-	img1 := cell.Objects[2].(*canvas.Image)
+	img1 := cell.Objects[2].(*piece)
 	pos1 := cell.Position()
 
 	over.Resource = img1.Resource
@@ -79,10 +74,10 @@ func move(m *chess.Move, game *chess.Game, grid *fyne.Container, over *canvas.Im
 func refreshGrid(grid *fyne.Container, b *chess.Board) {
 	y, x := 7, 0
 	for _, cell := range grid.Objects {
-		piece := b.Piece(chess.Square(x + y*8))
+		p := b.Piece(chess.Square(x + y*8))
 
-		img := cell.(*fyne.Container).Objects[2].(*canvas.Image)
-		img.Resource = resourceForPiece(piece)
+		img := cell.(*fyne.Container).Objects[2].(*piece)
+		img.Resource = resourceForPiece(p)
 		img.Refresh()
 
 		x++
