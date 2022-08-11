@@ -2,6 +2,7 @@ package main
 
 import (
 	"image/color"
+	"log"
 	"math/rand"
 	"time"
 
@@ -33,6 +34,31 @@ func newPiece(g *chess.Game, sq chess.Square) *piece {
 
 	ret.Resource = resourceForPiece(p)
 	return ret
+}
+
+func (p *piece) Dragged(ev *fyne.DragEvent) {
+	moveStart = p.square
+	off := squareToOffset(p.square)
+	cell := grid.Objects[off].(*fyne.Container)
+	img := cell.Objects[2].(*piece)
+
+	pos := cell.Position().Add(ev.Position)
+	over.Move(pos.Subtract(fyne.NewPos(img.Size().Width/2, img.Size().Height/2)))
+	over.Resize(img.Size())
+
+	if img.Resource != nil {
+		over.Resource = img.Resource
+		over.Show()
+
+		img.Resource = nil
+		img.Refresh()
+	}
+
+	over.Refresh()
+}
+
+func (p *piece) DragEnd() {
+	log.Println("STOP")
 }
 
 func (p *piece) Tapped(ev *fyne.PointEvent) {
