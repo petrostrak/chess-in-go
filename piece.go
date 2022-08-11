@@ -2,12 +2,10 @@ package main
 
 import (
 	"image/color"
-	"log"
 	"math/rand"
 	"time"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 	"github.com/notnil/chess"
 )
@@ -58,7 +56,19 @@ func (p *piece) Dragged(ev *fyne.DragEvent) {
 }
 
 func (p *piece) DragEnd() {
-	log.Println("STOP")
+	pos := over.Position().Add(fyne.NewPos(over.Size().Width/2, over.Size().Height/2))
+	sq := positionToSquare(pos)
+
+	if m := isValidMove(moveStart, sq, p.game); m != nil {
+		move(m, p.game, grid, over)
+
+		go func() {
+			time.Sleep(time.Second)
+			randomResponse(p.game)
+		}()
+	} else {
+		moveStart = chess.NoSquare
+	}
 }
 
 func (p *piece) Tapped(ev *fyne.PointEvent) {
@@ -93,8 +103,12 @@ func (p *piece) Tapped(ev *fyne.PointEvent) {
 	start.Hide()
 	start.Refresh()
 
+	off := squareToOffset(moveStart)
+	cell := grid.Objects[off].(*fyne.Container)
+
 	if m := isValidMove(moveStart, p.square, p.game); m != nil {
 		moveStart = chess.NoSquare
+		over.Move(cell.Position())
 		move(m, p.game, grid, over)
 
 		go func() {
@@ -105,8 +119,6 @@ func (p *piece) Tapped(ev *fyne.PointEvent) {
 	}
 
 	moveStart = chess.NoSquare
-	off := squareToOffset(p.square)
-	cell := grid.Objects[off].(*fyne.Container)
 
 	start.FillColor = notOkBGColor
 	start.StrokeColor = notOkColor
@@ -125,14 +137,16 @@ func (p *piece) Tapped(ev *fyne.PointEvent) {
 }
 
 func randomResponse(game *chess.Game) {
-	if game.Outcome() != chess.NoOutcome {
-		dialog.ShowInformation("Game ended",
-			"Game outcome "+game.Outcome().String()+" because "+game.Method().String(), w)
+	valid := game.ValidMoves()
+	if len(valid) == 0 {
 		return
 	}
-	rand.Seed(time.Now().Unix())
-	valid := game.ValidMoves()
 	m := valid[rand.Intn(len(valid))]
+
+	off := squareToOffset(m.S1())
+	cell := grid.Objects[off].(*fyne.Container)
+
+	over.Move(cell.Position())
 	move(m, game, grid, over)
 }
 
