@@ -1,34 +1,30 @@
 package main
 
 import (
-	"image/color"
-	"math/rand"
 	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/widget"
+
 	"github.com/notnil/chess"
 )
 
 var (
-	moveStart    chess.Square = chess.NoSquare
-	okColor                   = color.NRGBA{0, 0xff, 0, 0xff}
-	okBGColor                 = color.NRGBA{0, 0xff, 0, 0x28}
-	notOkColor                = color.NRGBA{0xff, 0, 0, 0xff}
-	notOkBGColor              = color.NRGBA{0xff, 0, 0, 0x28}
+	moveStart chess.Square = chess.NoSquare
 )
 
 type piece struct {
 	widget.Icon
-	game   *chess.Game
+
+	u      *ui
 	square chess.Square
 }
 
-func newPiece(g *chess.Game, sq chess.Square) *piece {
-	p := g.Position().Board().Piece(sq)
+func newPiece(u *ui, sq chess.Square) *piece {
+	p := u.game.Position().Board().Piece(sq)
 
-	ret := &piece{game: g, square: sq}
+	ret := &piece{u: u, square: sq}
 	ret.ExtendBaseWidget(ret)
 
 	ret.Resource = resourceForPiece(p)
@@ -36,140 +32,126 @@ func newPiece(g *chess.Game, sq chess.Square) *piece {
 }
 
 func (p *piece) Dragged(ev *fyne.DragEvent) {
+	if moveStart != chess.NoSquare && p.square != moveStart {
+		return // ignore drags if we are tapping
+	}
+
 	moveStart = p.square
 	off := squareToOffset(p.square)
-	cell := grid.Objects[off].(*fyne.Container)
+	cell := p.u.grid.objects[off].(*fyne.Container)
 	img := cell.Objects[2].(*piece)
 
 	pos := cell.Position().Add(ev.Position)
-	over.Move(pos.Subtract(fyne.NewPos(img.Size().Width/2, img.Size().Height/2)))
-	over.Resize(img.Size())
+	p.u.over.Move(pos.Subtract(fyne.NewPos(img.Size().Width/2, img.Size().Height/2)))
+	p.u.over.Resize(img.Size())
 
 	if img.Resource != nil {
-		over.Resource = img.Resource
-		over.Show()
+		p.u.over.Resource = img.Resource
+		p.u.over.Show()
 
 		img.Resource = nil
 		img.Refresh()
 	}
 
-	over.Refresh()
+	p.u.over.Refresh()
 }
 
 func (p *piece) DragEnd() {
-	pos := over.Position().Add(fyne.NewPos(over.Size().Width/2, over.Size().Height/2))
-	sq := positionToSquare(pos)
+	if moveStart != chess.NoSquare && p.square != moveStart {
+		return // ignore drags if we are tapping
+	}
 
-	if m := isValidMove(moveStart, sq, p.game); m != nil {
-		move(m, p.game, grid, over)
+	if p.u.start.Visible() {
+		p.u.start.Hide()
+		p.u.start.Refresh()
+	}
+
+	pos := p.u.over.Position().Add(fyne.NewPos(p.u.over.Size().Width/2, p.u.over.Size().Height/2))
+	sq := positionToSquare(pos, p.u.grid.Size())
+
+	if m := isValidMove(moveStart, sq, p.u.game); m != nil {
+		move(m, p.u.game, true, p.u)
 
 		go func() {
 			time.Sleep(time.Second)
-			randomResponse(p.game)
+			playResponse(p.u)
 		}()
 	} else {
 		off := squareToOffset(moveStart)
-		cell := grid.Objects[off].(*fyne.Container)
+		cell := p.u.grid.objects[off].(*fyne.Container)
 		pos2 := cell.Position()
 
-		a := canvas.NewPositionAnimation(over.Position(), pos2, time.Millisecond*500, func(p fyne.Position) {
-			over.Move(p)
-			over.Refresh()
+		a := canvas.NewPositionAnimation(p.u.over.Position(), pos2, time.Millisecond*500, func(pos fyne.Position) {
+			p.u.over.Move(pos)
+			p.u.over.Refresh()
 		})
 		a.Start()
-		time.Sleep(time.Millisecond * 500)
+		time.Sleep(time.Millisecond * 550)
 
-		refreshGrid(grid, p.game.Position().Board())
-		over.Hide()
+		p.u.refreshGrid()
+		p.u.over.Hide()
 	}
+	moveStart = chess.NoSquare
 }
 
 func (p *piece) Tapped(ev *fyne.PointEvent) {
 	if moveStart == p.square {
 		moveStart = chess.NoSquare
-		start.Hide()
-		start.Refresh()
+		p.u.start.Hide()
+		p.u.start.Refresh()
 		return
 	}
 
 	if moveStart == chess.NoSquare {
-		if m := isValidMove(p.square, chess.NoSquare, p.game); m != nil {
+		if m := isValidMove(p.square, chess.NoSquare, p.u.game); m != nil {
 			moveStart = p.square
-			start.FillColor = okBGColor
-			start.StrokeColor = okColor
+			p.u.start.FillColor = okBGColor
+			p.u.start.StrokeColor = okColor
 		} else {
-			start.FillColor = notOkBGColor
-			start.StrokeColor = notOkColor
+			p.u.start.FillColor = notOKBGColor
+			p.u.start.StrokeColor = notOKColor
 		}
 
 		off := squareToOffset(p.square)
-		cell := grid.Objects[off].(*fyne.Container)
+		cell := p.u.grid.objects[off].(*fyne.Container)
 
-		start.Move(cell.Position())
-		start.Resize(cell.Size())
-		start.Refresh()
-		start.Show()
-
+		p.u.start.Move(cell.Position())
+		p.u.start.Resize(cell.Size())
+		p.u.start.Refresh()
+		p.u.start.Show()
 		return
 	}
 
-	start.Hide()
-	start.Refresh()
+	p.u.start.Hide()
+	p.u.start.Refresh()
 
 	off := squareToOffset(moveStart)
-	cell := grid.Objects[off].(*fyne.Container)
+	cell := p.u.grid.objects[off].(*fyne.Container)
 
-	if m := isValidMove(moveStart, p.square, p.game); m != nil {
+	if m := isValidMove(moveStart, p.square, p.u.game); m != nil {
 		moveStart = chess.NoSquare
-		over.Move(cell.Position())
-		move(m, p.game, grid, over)
+		p.u.over.Move(cell.Position())
+		move(m, p.u.game, true, p.u)
 
 		go func() {
-			time.Sleep(time.Second)
-			randomResponse(p.game)
+			time.Sleep(time.Second / 2)
+			playResponse(p.u)
 		}()
 		return
 	}
 
 	moveStart = chess.NoSquare
 
-	start.FillColor = notOkBGColor
-	start.StrokeColor = notOkColor
-
-	start.Move(cell.Position())
-	start.Resize(cell.Size())
-	start.Refresh()
-	start.Show()
+	p.u.start.FillColor = notOKBGColor
+	p.u.start.StrokeColor = notOKColor
+	p.u.start.Move(cell.Position())
+	p.u.start.Resize(cell.Size())
+	p.u.start.Refresh()
+	p.u.start.Show()
 
 	go func() {
 		time.Sleep(time.Millisecond * 500)
-		start.Hide()
-		start.Refresh()
+		p.u.start.Hide()
+		p.u.start.Refresh()
 	}()
-
-}
-
-func randomResponse(game *chess.Game) {
-	valid := game.ValidMoves()
-	if len(valid) == 0 {
-		return
-	}
-	m := valid[rand.Intn(len(valid))]
-
-	off := squareToOffset(m.S1())
-	cell := grid.Objects[off].(*fyne.Container)
-
-	over.Move(cell.Position())
-	move(m, game, grid, over)
-}
-
-func isValidMove(s1, s2 chess.Square, g *chess.Game) *chess.Move {
-	valid := g.ValidMoves()
-	for _, m := range valid {
-		if m.S1() == s1 && (s2 == chess.NoSquare || m.S2() == s2) {
-			return m
-		}
-	}
-
-	return nil
 }
