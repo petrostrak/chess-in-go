@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/widget"
 	"github.com/notnil/chess"
 )
@@ -67,7 +68,19 @@ func (p *piece) DragEnd() {
 			randomResponse(p.game)
 		}()
 	} else {
-		moveStart = chess.NoSquare
+		off := squareToOffset(moveStart)
+		cell := grid.Objects[off].(*fyne.Container)
+		pos2 := cell.Position()
+
+		a := canvas.NewPositionAnimation(over.Position(), pos2, time.Millisecond*500, func(p fyne.Position) {
+			over.Move(p)
+			over.Refresh()
+		})
+		a.Start()
+		time.Sleep(time.Millisecond * 500)
+
+		refreshGrid(grid, p.game.Position().Board())
+		over.Hide()
 	}
 }
 

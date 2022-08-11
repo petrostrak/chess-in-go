@@ -55,19 +55,19 @@ func positionToSquare(pos fyne.Position) chess.Square {
 }
 
 func move(m *chess.Move, game *chess.Game, grid *fyne.Container, over *canvas.Image) {
-	off1 := squareToOffset(m.S1())
-	cell := grid.Objects[off1].(*fyne.Container)
-	img1 := cell.Objects[2].(*piece)
+	off := squareToOffset(m.S1())
+	cell := grid.Objects[off].(*fyne.Container)
+	img := cell.Objects[2].(*piece)
 
 	over.Resource = resourceForPiece(game.Position().Board().Piece(m.S1()))
-	over.Resize(img1.Size())
+	over.Resize(img.Size())
+	over.Refresh()
 
-	img1.Resource = nil
-	img1.Refresh()
-	over.Show()
+	img.Resource = nil
+	img.Refresh()
 
-	off2 := squareToOffset(m.S2())
-	cell = grid.Objects[off2].(*fyne.Container)
+	off = squareToOffset(m.S2())
+	cell = grid.Objects[off].(*fyne.Container)
 	pos2 := cell.Position()
 
 	a := canvas.NewPositionAnimation(over.Position(), pos2, time.Millisecond*500, func(p fyne.Position) {
@@ -76,6 +76,10 @@ func move(m *chess.Move, game *chess.Game, grid *fyne.Container, over *canvas.Im
 	})
 	a.Start()
 	time.Sleep(time.Millisecond * 500)
+
+	game.Move(m)
+	refreshGrid(grid, game.Position().Board())
+	over.Hide()
 
 	if game.Outcome() != chess.NoOutcome {
 		result := "draw"
@@ -87,10 +91,6 @@ func move(m *chess.Move, game *chess.Game, grid *fyne.Container, over *canvas.Im
 		}
 		dialog.ShowInformation("Game ended", "Game "+result+" because "+game.Method().String(), w)
 	}
-
-	game.Move(m)
-	over.Hide()
-	refreshGrid(grid, game.Position().Board())
 }
 
 func refreshGrid(grid *fyne.Container, b *chess.Board) {
