@@ -22,6 +22,11 @@ To install alongside the other applications on your system use the `fyne` tool.
     $ go get fyne.io/fyne/v2/cmd/fyne
     $ fyne install
 
+## Build
+To build a tar.xz file.
+
+    $ fyne package -appVersion 1.0.0 -appBuild 1 -name chess -release
+
 ## Screenshot
 
 <img src = "/img/screenshot.png" style="max-width: 488px" />
